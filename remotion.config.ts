@@ -6,7 +6,8 @@
 import { Config } from "@remotion/cli/config";
 import { enableTailwind } from '@remotion/tailwind-v4';
 
-Config.setRspack(true);
+// Rspack disabled: on the Windows machine it produced no bundle.js (webpack is used instead)
+// Config.setRspack(true);
 Config.setVideoImageFormat("jpeg");
 Config.setOverwriteOutput(true);
 Config.overrideBundlerConfig(enableTailwind);

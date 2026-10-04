@@ -1,0 +1,188 @@
+// 2026-09-13 초등경시 특강 (초5-2, 1. 수의 어림) — EP.02 "538의 비밀" 하이라이트
+// 원본: source/0913/lecture-0913.mp4 (영상 0초 = 18:40:29) → public/clips/0913b/*.mp4, cam_*.mp4 (캠 2배 보정)
+// 문제: 바둑돌로 정삼각형·정사각형 만들기 (규칙 찾기) → 정답 538. 93:33 ~ 101:17 구간
+// 채팅은 실제 chat.txt 메시지·리액션 기준(이름은 지역/학년), 참여감을 위해 210 답변 수만 각색
+import { TEACHER } from "./clips";
+import { DATA_0913 } from "./clips-0913";
+import type { Clip, HighlightData, Rect } from "./clips";
+
+const CAM_TR: Rect = { x: 1438, y: 46, w: 426, h: 240 };
+const PROB: Rect = { x: 300, y: 230, w: 760, h: 675 }; // 문제 05 지문 + 바둑돌 그림 + 538 (cover)
+const TRI: Rect = { x: 470, y: 620, w: 600, h: 400 }; // ② 정삼각형 표(변 2 3 4 10 20 / 돌 3 6 10 55 210) — contain 으로 1.8배 확대
+const FULL: Rect = { x: 480, y: 290, w: 1050, h: 740 }; // ①②표 전체 + 플러스10 줄 — contain
+
+const CLIPS: Clip[] = [
+  {
+    file: "clips/0913b/a.mp4",
+    camFile: "clips/0913b/cam_a.mp4",
+    source: "93:33.0 ~ 93:41.3",
+    duration: 8.3,
+    label: "어렵다고 말해도 괜찮아요",
+    desc: "어려운 걸 어렵다고 말하는 용기를 칭찬해요",
+    cam: CAM_TR,
+    board: PROB,
+    captions: [
+      { start: 0.0, end: 1.9, text: "손 들어준 거 고마워" },
+      { start: 1.9, end: 3.5, text: "선생님이 항상 말하지만" },
+      { start: 3.5, end: 5.9, text: "어려운 걸 어렵다고\n말할 수 있는 [[용기]]" },
+      { start: 5.9, end: 8.3, text: "아주 [[멋집니다]]" },
+    ],
+    chats: [
+      { t: 0.3, name: "대전 초4", text: "못풀겠어요" },
+      { t: 0.9, name: "부산 초5", text: "505 되지 않나요?" },
+      { t: 1.6, emoji: "✋" },
+      { t: 1.9, emoji: "✋" },
+      { t: 2.2, emoji: "✋" },
+      { t: 6.0, emoji: "👏" },
+      { t: 6.3, emoji: "👍" },
+      { t: 6.7, emoji: "👏" },
+    ],
+  },
+  {
+    file: "clips/0913b/b.mp4",
+    camFile: "clips/0913b/cam_b.mp4",
+    source: "94:17.8 ~ 94:37.0",
+    duration: 19.2,
+    label: "찍어서는 못 맞추는 문제",
+    desc: "짧은 시간에 풀어낸 친구들에게 박수",
+    cam: CAM_TR,
+    board: PROB,
+    captions: [
+      { start: 0.2, end: 4.6, text: "정답을 보면…" },
+      { start: 4.7, end: 8.2, text: "정답은 [[538개]]예요" },
+      { start: 8.2, end: 10.1, text: "전혀 찍어서\n맞출 수 없는 숫자" },
+      { start: 10.1, end: 11.5, text: "나 맞췄다!" },
+      { start: 11.5, end: 13.3, text: "몇 명 맞췄던데?" },
+      { start: 13.4, end: 14.8, text: "친구들 대단합니다" },
+      { start: 14.8, end: 17.4, text: "박수! 박수!\n이거 진짜 박수 쳐주겠습니다" },
+      { start: 17.5, end: 19.2, text: "짧은 시간에 이렇게 푸는 거\n[[대단합니다]]" },
+    ],
+    chats: [
+      { t: 1.0, name: "경기 초5", text: "538?" },
+      { t: 4.2, name: "전북 초5", text: "505에서 10뺀 495는 제곱수가 아님" },
+      { t: 5.2, emoji: "😮" },
+      { t: 5.5, emoji: "😮" },
+      { t: 8.6, emoji: "🎉" },
+      { t: 8.9, emoji: "😮" },
+      { t: 9.3, emoji: "🎉" },
+      { t: 14.9, emoji: "👏" },
+      { t: 15.2, emoji: "👏" },
+      { t: 15.5, emoji: "🎉" },
+      { t: 15.8, emoji: "👏" },
+      { t: 16.2, emoji: "👏" },
+      { t: 17.2, name: "경기 초5", text: "으앍 이런" },
+    ],
+  },
+  {
+    file: "clips/0913b/c1.mp4",
+    camFile: "clips/0913b/cam_c1.mp4",
+    source: "99:36.6 ~ 99:47.9",
+    duration: 11.3,
+    label: "퀴즈로 규칙 찾기",
+    desc: "1부터 20까지 더하면? 채팅으로 바로 답해요",
+    cam: CAM_TR,
+    board: TRI,
+    fit: "contain",
+    captions: [
+      { start: 0.2, end: 2.1, text: "자, 그러면" },
+      { start: 2.1, end: 6.2, text: "1부터 20까지 더하면\n[[몇일까?]]" },
+      { start: 6.2, end: 10.6, text: "1부터 20까지…" },
+    ],
+    chats: [
+      { t: 0.2, name: "초5", text: "55" },
+      { t: 6.6, emoji: "🤔" },
+      { t: 7.0, emoji: "🤔" },
+    ],
+  },
+  {
+    file: "clips/0913b/c2.mp4",
+    camFile: "clips/0913b/cam_c2.mp4",
+    source: "99:50.6 ~ 100:02.0",
+    duration: 11.4,
+    label: "",
+    cam: CAM_TR,
+    board: TRI,
+    fit: "contain",
+    captions: [
+      { start: 0.1, end: 3.0, text: "[[105]]요?" },
+      { start: 3.0, end: 5.8, text: "[[210]]입니다" },
+      { start: 5.8, end: 8.7, text: "20까지 더하면\n2번 나눠버렸네" },
+      { start: 8.7, end: 11.4, text: "그리고 30까지 더하면\n몇일까?" },
+    ],
+    chats: [
+      { t: 0.1, name: "초5", text: "105" },
+      { t: 1.4, name: "서울 초5", text: "210" },
+      { t: 1.9, name: "충북 초4", text: "210" },
+      { t: 2.4, name: "초5", text: "210" },
+      { t: 2.9, name: "충북 초4", text: "210!!" },
+      { t: 3.2, emoji: "👏" },
+      { t: 3.5, emoji: "🎉" },
+      { t: 3.8, emoji: "👏" },
+      { t: 4.2, emoji: "👍" },
+    ],
+  },
+  {
+    file: "clips/0913b/e.mp4",
+    camFile: "clips/0913b/cam_e.mp4",
+    source: "100:35.5 ~ 101:00.2",
+    duration: 24.7,
+    label: "끝까지 같이 적어보기",
+    desc: "규칙을 하나씩 적어서 답을 확인해요",
+    cam: CAM_TR,
+    board: FULL,
+    fit: "contain",
+    captions: [
+      { start: 0.3, end: 3.1, text: "몇 개가 남는댔지?" },
+      { start: 3.1, end: 5.1, text: "10개가 남는데, 정삼각형은" },
+      { start: 5.1, end: 10.2, text: "그러니까 여기다가 또\n[[플러스 10]]을 해야 됩니다" },
+      { start: 10.3, end: 20.2, text: "475 · 506 · [[538]] · 581" },
+      { start: 20.2, end: 23.2, text: "그래서 위아래 다 있는 숫자는\n[[538]]입니다" },
+      { start: 23.2, end: 24.7, text: "이렇게 푸는 문제예요" },
+    ],
+    chats: [
+      { t: 16.4, emoji: "😮" },
+      { t: 16.8, emoji: "😮" },
+      { t: 17.2, emoji: "👏" },
+      { t: 22.0, emoji: "🎉" },
+      { t: 22.3, emoji: "👏" },
+      { t: 22.7, emoji: "👏" },
+      { t: 23.1, emoji: "🎉" },
+    ],
+  },
+  {
+    file: "clips/0913b/f.mp4",
+    camFile: "clips/0913b/cam_f.mp4",
+    source: "101:09.4 ~ 101:17.2",
+    duration: 7.8,
+    label: "규칙이 보이면 풀려요",
+    desc: "규칙 문제인지 알아채는 눈을 길러요",
+    cam: CAM_TR,
+    board: FULL,
+    fit: "contain",
+    captions: [
+      { start: 0.2, end: 1.8, text: "이거 [[규칙 문제]]인지만\n알았으면" },
+      { start: 1.8, end: 4.2, text: "훨씬 많은 친구들이\n풀었을걸?" },
+      { start: 4.2, end: 7.8, text: "규칙 문제인지 몰라서\n아마 좀 헷갈렸을 것 같아" },
+    ],
+    chats: [
+      { t: 5.6, name: "경기 초5", text: "와......" },
+      { t: 6.4, emoji: "😮" },
+      { t: 6.8, emoji: "👏" },
+      { t: 7.2, emoji: "😮" },
+      { t: 7.8, emoji: "👏" },
+      { t: 8.3, emoji: "🎉" },
+    ],
+  },
+];
+
+export const DATA_0913B: HighlightData = {
+  teacher: TEACHER,
+  cam: CAM_TR,
+  episode: "EP.02",
+  title: "538의 비밀",
+  hook: "초등 경시 수학은\n[[규칙을 찾는 눈]]을\n길러야 합니다",
+  subtitle: "초등경시 특강 · 이렇게 수업해요",
+  clips: CLIPS,
+  holdAfterLast: 90,
+  outro: DATA_0913.outro,
+};

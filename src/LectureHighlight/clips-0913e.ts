@@ -1,0 +1,158 @@
+// 2026-09-13 초등경시 특강 — EP.05 "시간만 더 있었으면" (숫자 카드 범위 문제 12개, 122:57 ~ 125:51)
+// 원본: source/0913/lecture-0913.mp4 (영상 0초 = 18:40:29) → public/clips/0913e/
+import { TEACHER } from "./clips";
+import { DATA_0913 } from "./clips-0913";
+import type { Clip, HighlightData, Rect } from "./clips";
+
+const CAM_TR: Rect = { x: 1438, y: 46, w: 426, h: 240 };
+const PROB5: Rect = { x: 300, y: 330, w: 760, h: 675 }; // 문제 05 지문 + 숫자 카드 + 12 (cover)
+const FULL5: Rect = { x: 330, y: 110, w: 1100, h: 830 }; // 스크롤 뒤: 지문(위) + 수직선 ①② 판서(아래), contain
+
+const CLIPS: Clip[] = [
+  {
+    file: "clips/0913e/m1.mp4",
+    camFile: "clips/0913e/cam_m1.mp4",
+    source: "122:57.5 ~ 123:10.9",
+    duration: 13.4,
+    label: "어렵다, 같이 풀어보자",
+    desc: "혼자 못 풀어도 같이 풀면 돼요",
+    cam: CAM_TR,
+    board: PROB5,
+    captions: [
+      { start: 0.1, end: 1.6, text: "자, 같이 풀어보겠습니다" },
+      { start: 1.6, end: 2.6, text: "어렵다…" },
+      { start: 2.6, end: 6.6, text: "자, 일단 이 문제\n그래, 답을 먼저 알려줄게" },
+      { start: 7.6, end: 10.9, text: "답은 [[12개]]입니다" },
+      { start: 12.0, end: 13.4, text: "12개" },
+    ],
+    chats: [
+      { t: 0.3, name: "부산 초5", text: "저 맞죠?" },
+      { t: 0.9, name: "초5", text: "어렵네" },
+      { t: 2.0, name: "전북 초5", text: "12" },
+      { t: 2.5, name: "초5", text: "12" },
+      { t: 9.8, emoji: "🎉" },
+      { t: 10.1, emoji: "😮" },
+      { t: 10.5, emoji: "🎉" },
+      { t: 11.4, name: "경기 초5", text: "이런 틀렸군 어렵다..." },
+      { t: 12.2, emoji: "😅" },
+    ],
+  },
+  {
+    file: "clips/0913e/m2.mp4",
+    camFile: "clips/0913e/cam_m2.mp4",
+    source: "123:21.7 ~ 123:39.6",
+    duration: 17.9,
+    label: "시간만 더 있었으면",
+    desc: "빠르게 푸는 방법까지 배우는 수업이에요",
+    cam: CAM_TR,
+    board: PROB5,
+    captions: [
+      { start: 0.0, end: 2.1, text: "자, 봐보자" },
+      { start: 2.1, end: 4.3, text: "이 문제는" },
+      { start: 4.3, end: 6.2, text: "어렵다기보다는\n이것도 하나씩 하나씩" },
+      { start: 6.2, end: 8.1, text: "[[시간만 더 있었으면]]\n풀 수 있을 수 있어" },
+      { start: 8.1, end: 9.7, text: "맞아요" },
+      { start: 9.7, end: 12.0, text: "그런 문제가\n심화에 많아요" },
+      { start: 12.0, end: 13.8, text: "하지만 선생님이랑 할 때는" },
+      { start: 13.8, end: 16.3, text: "그거를 [[빠르게 푸는 방법]]도\n배우는 거예요" },
+      { start: 16.3, end: 17.9, text: "그래, 아쉬워요" },
+    ],
+    chats: [
+      { t: 0.3, name: "경기 초5", text: "으 시간만 더 있었으면 ㅠㅠ" },
+      { t: 1.0, name: "서울 초5", text: "어렵다ㅠ" },
+      { t: 1.6, name: "경기 초5", text: "너무 아쉬워용 ㅎ" },
+      { t: 2.1, name: "초5", text: "어렵" },
+      { t: 2.6, emoji: "😭" },
+      { t: 3.0, emoji: "😭" },
+      { t: 8.2, emoji: "👍" },
+      { t: 8.6, emoji: "👍" },
+      { t: 14.0, emoji: "👏" },
+      { t: 14.4, emoji: "😮" },
+      { t: 14.8, emoji: "👏" },
+      { t: 16.5, emoji: "❤️" },
+    ],
+  },
+  {
+    file: "clips/0913e/m3.mp4",
+    camFile: "clips/0913e/cam_m3.mp4",
+    source: "124:15.0 ~ 124:40.4",
+    duration: 25.4,
+    label: "수직선을 거꾸로 두 번",
+    desc: "범위를 그려서 빠지는 것 없이 찾아요",
+    cam: CAM_TR,
+    board: FULL5,
+    fit: "contain",
+    captions: [
+      { start: 0.0, end: 2.1, text: "또 [[수직선]]으로\n그려보겠습니다" },
+      { start: 2.1, end: 5.8, text: "수직선으로 그려보면" },
+      { start: 5.8, end: 11.5, text: "3800이 되어야 되니까" },
+      { start: 11.6, end: 13.6, text: "반올림해서\n3800이 되어야 되잖아" },
+      { start: 13.7, end: 20.1, text: "그러면 [[3750]]에서\n[[3850]] 사이가 되겠지?" },
+      { start: 21.3, end: 23.7, text: "자, 이런 거 그려서\n하는 게 좋아요" },
+      { start: 23.8, end: 25.4, text: "그래야지 [[빠지는 게 없어]]" },
+    ],
+    chats: [
+      { t: 21.6, emoji: "👍" },
+      { t: 22.0, emoji: "👍" },
+      { t: 24.0, emoji: "👏" },
+      { t: 24.4, emoji: "👍" },
+    ],
+  },
+  {
+    file: "clips/0913e/m4.mp4",
+    camFile: "clips/0913e/cam_m4.mp4",
+    source: "125:12.5 ~ 125:30.6",
+    duration: 18.1,
+    label: "",
+    cam: CAM_TR,
+    board: FULL5,
+    fit: "contain",
+    captions: [
+      { start: 0.0, end: 1.6, text: "그러니까 어떤 수를\n올림해서" },
+      { start: 1.6, end: 3.5, text: "ㄴ이 되려면\n다시 한 번 더 적는 거예요" },
+      { start: 3.6, end: 7.3, text: "올림해서\n3750이 되어야 돼" },
+      { start: 7.4, end: 12.2, text: "그러면 3750이 아니라" },
+      { start: 12.2, end: 16.0, text: "[[3740 초과]]가\n되어야겠지?" },
+      { start: 16.0, end: 18.1, text: "여기는 들어가면 안 되지" },
+    ],
+    chats: [
+      { t: 12.4, emoji: "😮" },
+      { t: 12.8, emoji: "😮" },
+      { t: 16.2, emoji: "👍" },
+    ],
+  },
+  {
+    file: "clips/0913e/m5.mp4",
+    camFile: "clips/0913e/cam_m5.mp4",
+    source: "125:42.8 ~ 125:51.5",
+    duration: 8.7,
+    label: "",
+    cam: CAM_TR,
+    board: FULL5,
+    fit: "contain",
+    captions: [
+      { start: 0.0, end: 4.3, text: "그래서 [[범위]]가\n이렇게 돼요" },
+      { start: 6.1, end: 8.7, text: "이렇게 되는 숫자를\n찾아야 돼" },
+    ],
+    chats: [
+      { t: 4.4, emoji: "👏" },
+      { t: 4.8, emoji: "👏" },
+      { t: 5.2, emoji: "🎉" },
+      { t: 8.8, emoji: "👍" },
+      { t: 9.2, emoji: "❤️" },
+      { t: 9.6, emoji: "👏" },
+    ],
+  },
+];
+
+export const DATA_0913E: HighlightData = {
+  teacher: TEACHER,
+  cam: CAM_TR,
+  episode: "EP.05",
+  title: "시간만 더 있었으면",
+  hook: "초등 경시 수학은\n[[끝까지 붙잡는 힘]]을\n길러야 합니다",
+  subtitle: "초등경시 특강 · 이렇게 수업해요",
+  clips: CLIPS,
+  holdAfterLast: 90,
+  outro: DATA_0913.outro,
+};

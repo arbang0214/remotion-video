@@ -5,3 +5,12 @@ dist
 
 # Ignore the output video from Git but not videos you import into src/.
 out
+
+# 원본 영상·전사본(실명 포함)은 커밋하지 않음 — 작업 스크립트만 추적
+source/*
+!source/*.py
+
+studio.log
+
+# 영상 소재(학생·학부모 사진/클립 포함)는 커밋하지 않음 — 맥미니로 직접 복사
+public/
