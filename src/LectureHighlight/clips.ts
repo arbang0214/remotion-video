@@ -40,13 +40,15 @@ export type Chat = { t: number; name?: string; text?: string; emoji?: string };
 // notes: 수업 화면 아래쪽에 붙는 보충 메모(예: 학생 계산 실수 짚기)
 export type Span = { start: number; end: number };
 export type Note = Span & { text: string };
-export type Clip = { file: string; source: string; duration: number; label: string; desc?: string; bigBoard?: boolean; fit?: "cover" | "contain"; visual?: "video" | "teacherCard"; cardTimes?: number[]; captions: Caption[]; board: Rect; cam?: Rect; camFile?: string; chats?: Chat[]; kid?: Span[]; kidLabel?: string; notes?: Note[] };
+export type Clip = { file: string; source: string; duration: number; label: string; desc?: string; bigBoard?: boolean; noteBoard?: boolean; boardKeys?: { t: number; rect: Rect; free?: boolean }[]; fit?: "cover" | "contain"; visual?: "video" | "teacherCard"; cardTimes?: number[]; captions: Caption[]; board: Rect; cam?: Rect; camFile?: string; chats?: Chat[]; kid?: Span[]; kidLabel?: string; notes?: Note[] };
 export type Teacher = typeof TEACHER;
 export type OutroLink = { label: string; url: string; qr?: string; icon?: string }; // qr 가 있으면 QR 카드, 없으면 텍스트 링크 줄
 export type Outro = { lines: string[]; links?: OutroLink[]; note?: string; photo?: string; footer?: string }; // photo: 선생님 사진 교체, note: 안내 문구, footer: 맨 아래 한 줄
 // episode: 타이틀 앞 스티커(EP.01), icon: 타이틀 옆 작은 아이콘 이미지(public/ 경로, 없으면 표시 안 함)
 // hook: 썸네일(첫 프레임·썸네일 카드) 메인 문구. "초등 수학은\n[[강조]]을\n길러야 합니다" 처럼 줄마다 \n, 강조는 [[ ]]. 있으면 title 대신 크게 쓰고 title 은 작은 태그로
-export type HighlightData = { teacher: Teacher; cam: Rect; title: string; subtitle: string; episode?: string; icon?: string; hook?: string; clips: Clip[]; holdAfterLast: number; outro?: Outro };
+// cover: 필기 강조 썸네일(NoteThumbnail) 설정. 있으면 본편 첫 화면도 같은 카드로 시작
+export type NoteCover = { note: string; noteAspect: number; camFile: string; camFrom?: number; faceAt?: [number, number]; faceBox?: number; tag?: string; cardW?: number; cardTop?: number; faceInset?: number; belowGap?: number; labelRight?: boolean; cardLeft?: number; facePhoto?: string; faceSize?: number };
+export type HighlightData = { teacher: Teacher; cam: Rect; title: string; subtitle: string; episode?: string; icon?: string; hook?: string; clips: Clip[]; holdAfterLast: number; outro?: Outro; cover?: NoteCover };
 
 export const CLIPS: Clip[] = [
   {

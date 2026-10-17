@@ -3,12 +3,14 @@ import { AbsoluteFill, Sequence, OffthreadVideo, Audio, Freeze, Img, staticFile,
 import { FONT } from "../BreakGameIntro/shared";
 import { FPS } from "./clips";
 import { HookText } from "./Hook";
+import { NoteThumbnail } from "./NoteThumbnail";
 import type { Rect, HighlightData, Chat as ChatEvent } from "./clips";
 
 // 세로 쇼츠 레이아웃 (1080x1920)
 // - 위 절반(960) = 라이브: [타이틀 여백 230][캠 852x480][자막 띠 250], 배경은 캠을 블러한 앰비언트
 // - 아래 절반(960) = 실시간 수업 화면(판서, cover 크롭) + 그 위에 학생 채팅·이모지 반응 오버랩
 // - bigBoard 클립만 라이브 780 / 수업 화면 1140 (풀이 판서를 크게 보여줄 때)
+// - noteBoard 클립은 캠을 568x320 으로 줄이고 수업 화면 1320. boardKeys 가 있으면 판서 영역을 시간에 따라 확대·이동(필기 따라가기)
 // - 챕터마다: 제목+한 줄 설명이 중앙에 "짠" 등장 → 제목만 위 타이틀 여백으로 이동 → 영상 재생 (그동안 첫 프레임 정지)
 // - 첫 클립은 그 앞에 에피소드 타이틀. 유튜브 쇼츠 자동 썸네일이 첫 프레임을 잡으므로 0프레임에 이미 완성된 카드로 시작(페이드인 없음). 마지막에 아웃트로(선생님 사진 + 문구 + QR 2개, data.outro 가 있을 때만)
 // - 자막은 캠 아래 띠에(줄바꿈 지원), 채팅은 수업 화면 오른쪽 아래에 크게, 이모지는 수업 화면 왼쪽에서 여러 개 떠오름
@@ -20,14 +22,16 @@ const W = 1080;
 const H = 1920;
 const CAM_W2 = 852; // 캠 표시 크기(원본 426x240 의 2배 — 화질 때문에 이 이상 키우지 않음)
 const CAM_H2 = 480;
-const TITLE_LEAD = 40; // 첫 클립 앞 에피소드 타이틀: 0프레임부터 완성된 카드(썸네일용)로 0.9초 머문 뒤 0.4초 퇴장
+const TITLE_LEAD = 90; // 첫 클립 앞 에피소드 타이틀: 0프레임부터 완성된 카드(썸네일용)로 2.6초 머문 뒤 0.4초 퇴장 (훅 문구 읽을 시간)
 const CHAPTER_LEAD = 48; // 챕터 제목 등장 → 위로 이동(1.6초), 이 동안 영상 정지
 
-type Layout = { liveH: number; titleBand: number; camTop: number; bandTop: number; headerY: number; headerScale: number };
-const layoutOf = (bigBoard?: boolean): Layout =>
-  bigBoard
-    ? { liveH: 780, titleBand: 130, camTop: 130, bandTop: 610, headerY: 44, headerScale: 0.42 }
-    : { liveH: 960, titleBand: 230, camTop: 230, bandTop: 710, headerY: 118, headerScale: 0.6 };
+type Layout = { liveH: number; titleBand: number; camTop: number; camW: number; camH: number; bandTop: number; headerY: number; headerScale: number };
+const layoutOf = (clip?: { bigBoard?: boolean; noteBoard?: boolean }): Layout =>
+  clip?.noteBoard
+    ? { liveH: 600, titleBand: 130, camTop: 130, camW: 568, camH: 320, bandTop: 450, headerY: 44, headerScale: 0.42 }
+    : clip?.bigBoard
+      ? { liveH: 780, titleBand: 130, camTop: 130, camW: CAM_W2, camH: CAM_H2, bandTop: 610, headerY: 44, headerScale: 0.42 }
+      : { liveH: 960, titleBand: 230, camTop: 230, camW: CAM_W2, camH: CAM_H2, bandTop: 710, headerY: 118, headerScale: 0.6 };
 
 const OUTRO_FRAMES = 180; // 아웃트로 6초 (QR 찍을 시간)
 
@@ -43,6 +47,40 @@ const CoverVideo: React.FC<{ src: string; rect: Rect; width: number; height: num
   return (
     <div style={{ width, height, overflow: "hidden", position: "relative", background: fit === "contain" ? "#fff" : "#000" }}>
       <div style={{ position: "absolute", left: width / 2 - cx * scale, top: height / 2 - cy * scale, width: SRC_W * scale, height: SRC_H * scale, clipPath: fit === "contain" ? `inset(${rect.y * scale}px ${(SRC_W - rect.x - rect.w) * scale}px ${(SRC_H - rect.y - rect.h) * scale}px ${rect.x * scale}px)` : undefined }}>
+        <OffthreadVideo src={src} muted={muted} style={{ width: "100%", height: "100%", display: "block" }} />
+      </div>
+    </div>
+  );
+};
+
+// 판서 따라가기: keys[i].rect 가 박스 안에 다 들어오게(contain) 맞추고, 각 key 시각부터 PAN_SEC 동안 부드럽게 이동.
+// 원본 밖이 보이지 않도록 중심을 원본 안쪽으로 당기고(free 면 세로는 안 당김), 그래도 남는 곳은 bg(페이지 색)로 채운다
+const PAN_SEC = 0.8;
+const BoardPan: React.FC<{ src: string; keys: { t: number; rect: Rect; free?: boolean }[]; width: number; height: number; muted?: boolean; bg?: string }> = ({ src, keys, width, height, muted, bg = "#F3F3F5" }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const t = frame / fps;
+  let r = keys[0].rect;
+  let free = keys[0].free;
+  for (let i = 1; i < keys.length; i++) {
+    if (t < keys[i].t) break;
+    free = keys[i].free;
+    const p = Math.min(1, (t - keys[i].t) / PAN_SEC);
+    const e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+    const a = keys[i - 1].rect;
+    const b = keys[i].rect;
+    // 다음 key 로 넘어가기 전에 이전 이동이 끝나 있다고 보고, 직전 목표(a)에서 출발
+    r = { x: a.x + (b.x - a.x) * e, y: a.y + (b.y - a.y) * e, w: a.w + (b.w - a.w) * e, h: a.h + (b.h - a.h) * e };
+  }
+  const scale = Math.min(width / r.w, height / r.h);
+  const hw = width / scale / 2;
+  const hh = height / scale / 2;
+  const clampC = (c: number, half: number, size: number) => (half * 2 >= size ? size / 2 : Math.min(Math.max(c, half), size - half));
+  const cx = clampC(r.x + r.w / 2, hw, SRC_W);
+  const cy = free ? r.y + r.h / 2 : clampC(r.y + r.h / 2, hh, SRC_H); // free: 아래쪽 판서를 가운데 두려고 원본 밖(페이지 색)까지 보여줌
+  return (
+    <div style={{ width, height, overflow: "hidden", position: "relative", background: bg }}>
+      <div style={{ position: "absolute", left: width / 2 - cx * scale, top: height / 2 - cy * scale, width: SRC_W * scale, height: SRC_H * scale }}>
         <OffthreadVideo src={src} muted={muted} style={{ width: "100%", height: "100%", display: "block" }} />
       </div>
     </div>
@@ -74,6 +112,19 @@ const Sticker: React.FC<{ children: React.ReactNode; bg: string; color?: string;
 );
 
 // 에피소드 타이틀(첫 클립 앞) — 키네틱 타이포
+// 필기 강조 썸네일을 그대로 첫 화면으로(0프레임 = 썸네일). 정지 화면으로 머물다 끝에서 위로 빠지며 퇴장
+const CoverOverlay: React.FC<{ data: HighlightData }> = ({ data }) => {
+  const frame = useCurrentFrame();
+  const out = interpolate(frame, [TITLE_LEAD - 12, TITLE_LEAD], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  return (
+    <AbsoluteFill style={{ opacity: out, transform: `translateY(${(1 - out) * -60}px)`, pointerEvents: "none" }}>
+      <Freeze frame={0}>
+        <NoteThumbnail data={data} {...data.cover!} />
+      </Freeze>
+    </AbsoluteFill>
+  );
+};
+
 const TitleOverlay: React.FC<{ data: HighlightData }> = ({ data }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -211,12 +262,12 @@ const ReactionLayer: React.FC<{ chats: ChatEvent[]; height: number }> = ({ chats
 };
 
 // 학생 발화 표시: 캠 아래쪽에 "직접 설명 중" 배지 + 음성 막대(움직이는 이퀄라이저)
-const KidBadge: React.FC<{ label: string; age: number; camTop: number }> = ({ label, age, camTop }) => {
+const KidBadge: React.FC<{ label: string; age: number; camBottom: number }> = ({ label, age, camBottom }) => {
   const { fps } = useVideoConfig();
   const s = spring({ frame: Math.round(age * fps), fps, config: { damping: 12, stiffness: 180 } });
   const bars = [0, 1, 2, 3, 4];
   return (
-    <div style={{ position: "absolute", left: 0, right: 0, top: camTop + CAM_H2 - 92, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+    <div style={{ position: "absolute", left: 0, right: 0, top: camBottom - 92, display: "flex", justifyContent: "center", pointerEvents: "none" }}>
       <div style={{ transform: `translateY(${(1 - s) * 30}px) scale(${0.85 + s * 0.15})`, opacity: s, display: "flex", alignItems: "center", gap: 16, background: C.sky, color: C.ink, borderRadius: 999, padding: "12px 30px", boxShadow: `0 10px 30px rgba(0,0,0,0.5), 0 0 30px ${C.sky}88` }}>
         <span style={{ fontSize: 36 }}>🙋</span>
         <span style={{ fontSize: 34, fontWeight: 900, letterSpacing: -1, whiteSpace: "nowrap" }}>{label}가 직접 설명 중</span>
@@ -241,7 +292,7 @@ const TeacherVisual: React.FC<{ data: HighlightData; layout: Layout; boardH: num
         <div style={{ position: "absolute", left: -W * 0.15, top: -layout.liveH * 0.2, width: W * 1.3, height: layout.liveH * 1.4, filter: "blur(44px) brightness(0.4) saturate(1.3)" }}>
           <Img src={photo} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         </div>
-        <div style={{ position: "absolute", left: (W - CAM_W2) / 2, top: layout.camTop, width: CAM_W2, height: CAM_H2, overflow: "hidden", borderRadius: 6, boxShadow: "0 14px 44px rgba(0,0,0,0.6)" }}>
+        <div style={{ position: "absolute", left: (W - layout.camW) / 2, top: layout.camTop, width: layout.camW, height: layout.camH, overflow: "hidden", borderRadius: 6, boxShadow: "0 14px 44px rgba(0,0,0,0.6)" }}>
           <Img src={photo} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 18%", display: "block" }} />
         </div>
       </div>
@@ -276,7 +327,7 @@ const Clip: React.FC<{ data: HighlightData; index: number }> = ({ data, index })
   const CLIPS = data.clips;
   const clip = CLIPS[index];
   const CAM = clip.cam ?? data.cam;
-  const L = layoutOf(clip.bigBoard);
+  const L = layoutOf(clip);
   const boardH = H - L.liveH;
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -322,7 +373,7 @@ const Clip: React.FC<{ data: HighlightData; index: number }> = ({ data, index })
           <div style={{ position: "absolute", left: -W * 0.15, top: -L.liveH * 0.2, width: W * 1.3, height: L.liveH * 1.4, filter: "blur(44px) brightness(0.4) saturate(1.3)" }}>
             <OffthreadVideo src={camSrc} muted style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
           </div>
-          <div style={{ position: "absolute", left: (W - CAM_W2) / 2, top: L.camTop, width: CAM_W2, height: CAM_H2, overflow: "hidden", borderRadius: 6, boxShadow: "0 14px 44px rgba(0,0,0,0.6)" }}>
+          <div style={{ position: "absolute", left: (W - L.camW) / 2, top: L.camTop, width: L.camW, height: L.camH, overflow: "hidden", borderRadius: 6, boxShadow: "0 14px 44px rgba(0,0,0,0.6)" }}>
             <OffthreadVideo src={camSrc} muted style={{ width: "100%", height: "100%", display: "block" }} />
           </div>
         </div>
@@ -332,7 +383,11 @@ const Clip: React.FC<{ data: HighlightData; index: number }> = ({ data, index })
         </div>
       )}
       <div style={{ position: "absolute", left: 0, top: L.liveH }}>
-        <CoverVideo src={src} rect={clip.board} width={W} height={boardH} muted={muted} fit={clip.fit} />
+        {clip.boardKeys ? (
+          <BoardPan src={src} keys={clip.boardKeys} width={W} height={boardH} muted={muted} />
+        ) : (
+          <CoverVideo src={src} rect={clip.board} width={W} height={boardH} muted={muted} fit={clip.fit} />
+        )}
       </div>
     </>
     );
@@ -348,7 +403,7 @@ const Clip: React.FC<{ data: HighlightData; index: number }> = ({ data, index })
 
       {/* LIVE 표시(캠 왼쪽 위) + 판서 태그 */}
       {!isCard && (
-        <div style={{ position: "absolute", left: (W - CAM_W2) / 2 + 18, top: L.camTop + 18, display: "flex", alignItems: "center", gap: 10, background: "rgba(0,0,0,0.55)", borderRadius: 999, padding: "6px 16px", opacity: 0.9 }}>
+        <div style={{ position: "absolute", left: (W - L.camW) / 2 + 18, top: L.camTop + 18, display: "flex", alignItems: "center", gap: 10, background: "rgba(0,0,0,0.55)", borderRadius: 999, padding: "6px 16px", opacity: 0.9 }}>
           <div style={{ width: 14, height: 14, borderRadius: "50%", background: C.coral, boxShadow: `0 0 ${6 + pulse * 14}px ${C.coral}` }} />
           <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1 }}>LIVE</span>
         </div>
@@ -367,8 +422,8 @@ const Clip: React.FC<{ data: HighlightData; index: number }> = ({ data, index })
       {/* 학생 발화 중: 캠 테두리 발광 + 배지 */}
       {kidSpan && !isCard && (
         <>
-          <div style={{ position: "absolute", left: (W - CAM_W2) / 2 - 6, top: L.camTop - 6, width: CAM_W2 + 12, height: CAM_H2 + 12, borderRadius: 10, border: `6px solid ${C.sky}`, boxShadow: `0 0 ${24 + pulse * 20}px ${C.sky}`, pointerEvents: "none" }} />
-          <KidBadge label={kidLabel} age={t - kidSpan.start} camTop={L.camTop} />
+          <div style={{ position: "absolute", left: (W - L.camW) / 2 - 6, top: L.camTop - 6, width: L.camW + 12, height: L.camH + 12, borderRadius: 10, border: `6px solid ${C.sky}`, boxShadow: `0 0 ${24 + pulse * 20}px ${C.sky}`, pointerEvents: "none" }} />
+          <KidBadge label={kidLabel} age={t - kidSpan.start} camBottom={L.camTop + L.camH} />
         </>
       )}
 
@@ -401,7 +456,7 @@ const Clip: React.FC<{ data: HighlightData; index: number }> = ({ data, index })
       <AbsoluteFill style={{ background: `rgba(6,10,24,${scrim})`, pointerEvents: "none" }} />
 
       {/* 챕터 제목: 리드 구간에 중앙 등장 → 타이틀 여백으로 이동, 이후 유지 */}
-      {index === 0 && frame < TITLE_LEAD && <TitleOverlay data={data} />}
+      {index === 0 && frame < TITLE_LEAD && (data.cover ? <CoverOverlay data={data} /> : <TitleOverlay data={data} />)}
       {clip.label ? (
         frame >= lead - CHAPTER_LEAD && (
           <Sequence from={lead - CHAPTER_LEAD} layout="none">
