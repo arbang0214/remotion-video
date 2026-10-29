@@ -40,9 +40,9 @@ const O1_NOTE: Clip = {
   board: O_NOTE,
   noteBoard: true,
   boardKeys: [
-    { t: 0, rect: { x: 420, y: 0, w: 720, h: 880 } }, // 제목·정의 두 줄
+    { t: 0, rect: { x: 440, y: 240, w: 620, h: 420 } }, // 제목·정의 두 줄(얼굴 없는 판서 1540 에 맞춰 더 확대)
     { t: 11.3, rect: { x: 470, y: 100, w: 1040, h: 880 } }, // 외접원 줄 + 오른쪽 원이 함께 나타남
-    { t: 15.5, rect: { x: 960, y: 96, w: 620, h: 758 } }, // 원에 반지름 긋기
+    { t: 15.5, rect: { x: 1180, y: 330, w: 480, h: 300 } }, // 원에 반지름 긋기
     { t: 22.5, rect: { x: 500, y: 150, w: 1050, h: 1000 } }, // 화면이 내려가며 성질①(그림+이등변삼각형 3개)
   ],
   captions: [
@@ -66,9 +66,9 @@ const O2: Clip = {
   board: O_NOTE2,
   noteBoard: true,
   boardKeys: [
-    { t: 0, rect: { x: 620, y: 700, w: 740, h: 300 }, free: true }, // ② 삼각형
-    { t: 8.9, rect: { x: 760, y: 700, w: 740, h: 300 }, free: true }, // 오른쪽 "두 명" 선분의 중앙 찍기
-    { t: 17.4, rect: { x: 620, y: 700, w: 740, h: 300 }, free: true }, // 다시 삼각형: 변마다 중앙선 긋기
+    { t: 0, rect: { x: 540, y: 700, w: 520, h: 400 }, free: true }, // ② 삼각형
+    { t: 8.9, rect: { x: 980, y: 650, w: 520, h: 400 }, free: true }, // 오른쪽 "두 명" 선분의 중앙 찍기
+    { t: 17.4, rect: { x: 540, y: 720, w: 520, h: 400 }, free: true }, // 다시 삼각형: 변마다 중앙선 긋기
     { t: 39.3, rect: { x: 420, y: 600, w: 860, h: 300 }, free: true }, // 그림 지우고 "② 외심은 세 변 수직이등분선의 교점" 판서
   ],
   captions: [
@@ -98,7 +98,9 @@ export const DATA_1016O: HighlightData = {
   clips: [O1_HOOK, O1_NOTE, { ...O2, label: "외심 찾는 법" }],
   holdAfterLast: 75, // 다 쓴 "교점" 판서를 2.5초 보여주고 아웃트로
   // 썸네일·첫 화면: 57:10 완성 필기(캠 자리 페이지 색으로 덮음) + 정면 보는 캠 프레임
-  cover: { note: "clips/1016o/note_full.png", noteAspect: 1180 / 790, camFile: "clips/1016o/cam_o2.mp4", camFrom: 1100, faceAt: [405, 250], faceBox: 320, tag: "도형 개념 정리 · 삼각형의 외심" },
+  // 2026-10-22: 얼굴 없이 음성 + 필기만. 썸네일은 필기 전체(source/1016/image (3).png 2배)
+  cover: { noFace: true, note: "clips/1016o/note_whole.png", noteAspect: 1070 / 1598, camFile: "clips/1016o/cam_o2.mp4", tag: "도형 개념 정리 · 삼각형의 외심", cardW: 640, cardTop: 740, belowGap: 60 },
+  noFace: true, bubble: "glass", // 2026-10-22 사용자 선택: 방송 자막 카드
   outro,
 };
 

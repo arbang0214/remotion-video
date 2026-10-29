@@ -11,8 +11,9 @@ const C = { gold: "#FFD23F", coral: "#FF5C7A", sky: "#5DB7FF", ink: "#0F1B33" };
 // note: 완성된 필기 이미지(public 경로), noteAspect: 가로/세로 비, hook: data.hook 대신 쓸 문구(시안 비교용)
 // faceAt: 캠(852x480)에서 얼굴 중심 좌표, faceBox: 원 안에 담을 캠 영역 크기(머리~어깨)
 // facePhoto: 캠 프레임 대신 쓸 얼굴 사진(정사각, 얼굴캠 원본에서 표정 좋은 순간을 잘라 둠)
+// noFace: 얼굴 원 없이 필기 카드만
 // labelRight: 필기 제목이 왼쪽 위에 있으면 라벨을 오른쪽으로. cardLeft: 좁고 긴 필기는 왼쪽에 두고 얼굴을 카드 옆에(faceInset 을 얼굴 크기만큼). cardW·cardTop: 필기 카드 폭·위치(세로로 긴 필기는 줄임), faceInset: 얼굴 원이 카드 아래쪽에 걸치는 깊이, belowGap: 카드 아래~부제 간격
-export const NoteThumbnail: React.FC<{ data: HighlightData; note: string; noteAspect: number; camFile: string; camFrom?: number; faceAt?: [number, number]; faceBox?: number; hook?: string; tag?: string; noteLabel?: string; cardW?: number; cardTop?: number; faceInset?: number; belowGap?: number; labelRight?: boolean; cardLeft?: number; facePhoto?: string; faceSize?: number }> = ({ data, note, noteAspect, camFile, camFrom = 0, faceAt = [426, 240], faceBox = 320, hook, tag, noteLabel = "실제 수업 필기", cardW = 980, cardTop = 820, faceInset = 60, belowGap = 240, labelRight = false, cardLeft, facePhoto, faceSize = 260 }) => {
+export const NoteThumbnail: React.FC<{ data: HighlightData; note: string; noteAspect: number; camFile: string; camFrom?: number; faceAt?: [number, number]; faceBox?: number; hook?: string; tag?: string; noteLabel?: string; cardW?: number; cardTop?: number; faceInset?: number; belowGap?: number; labelRight?: boolean; cardLeft?: number; facePhoto?: string; faceSize?: number; noFace?: boolean }> = ({ data, noFace = false, note, noteAspect, camFile, camFrom = 0, faceAt = [426, 240], faceBox = 320, hook, tag, noteLabel = "실제 수업 필기", cardW = 980, cardTop = 820, faceInset = 60, belowGap = 240, labelRight = false, cardLeft, facePhoto, faceSize = 260 }) => {
   const cardH = Math.round(cardW / noteAspect);
   const face = faceSize;
   return (
@@ -34,6 +35,7 @@ export const NoteThumbnail: React.FC<{ data: HighlightData; note: string; noteAs
       </div>
 
       {/* 카드 오른쪽 아래 모서리(필기를 가리지 않게 카드 밖으로 걸침): 선생님 얼굴 */}
+      {!noFace && (
       <div style={{ position: "absolute", left: 1080 - face - (face > 260 ? 22 : 40), top: cardTop + cardH - faceInset, width: face, height: face, borderRadius: "50%", overflow: "hidden", border: `8px solid ${C.gold}`, boxShadow: "0 18px 40px rgba(0,0,0,0.6)", background: "#000" }}>
         {facePhoto ? (
           <Img src={staticFile(facePhoto)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
@@ -43,6 +45,7 @@ export const NoteThumbnail: React.FC<{ data: HighlightData; note: string; noteAs
         </div>
         )}
       </div>
+      )}
 
       {/* 아래: 부제 + 브랜드 */}
       <div style={{ position: "absolute", left: 0, right: 0, top: cardTop + cardH + belowGap, display: "flex", flexDirection: "column", alignItems: "center", gap: 22 }}>

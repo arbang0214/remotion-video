@@ -11,6 +11,8 @@ import type { Rect, HighlightData, Chat as ChatEvent } from "./clips";
 // - 아래 절반(960) = 실시간 수업 화면(판서, cover 크롭) + 그 위에 학생 채팅·이모지 반응 오버랩
 // - bigBoard 클립만 라이브 780 / 수업 화면 1140 (풀이 판서를 크게 보여줄 때)
 // - noteBoard 클립은 캠을 568x320 으로 줄이고 수업 화면 1320. boardKeys 가 있으면 판서 영역을 시간에 따라 확대·이동(필기 따라가기)
+// - data.noFace 면 캠 없이 위 380(챕터 제목 130 + 자막 띠 250) / 수업 화면 1540. 위 배경은 남색 그라데이션
+//   자막은 왼쪽 작은 선생님 얼굴(프로필 사진) + 오른쪽 흰 말풍선
 // - 챕터마다: 제목+한 줄 설명이 중앙에 "짠" 등장 → 제목만 위 타이틀 여백으로 이동 → 영상 재생 (그동안 첫 프레임 정지)
 // - 첫 클립은 그 앞에 에피소드 타이틀. 유튜브 쇼츠 자동 썸네일이 첫 프레임을 잡으므로 0프레임에 이미 완성된 카드로 시작(페이드인 없음). 마지막에 아웃트로(선생님 사진 + 문구 + QR 2개, data.outro 가 있을 때만)
 // - 자막은 캠 아래 띠에(줄바꿈 지원), 채팅은 수업 화면 오른쪽 아래에 크게, 이모지는 수업 화면 왼쪽에서 여러 개 떠오름
@@ -26,8 +28,10 @@ const TITLE_LEAD = 90; // 첫 클립 앞 에피소드 타이틀: 0프레임부�
 const CHAPTER_LEAD = 48; // 챕터 제목 등장 → 위로 이동(1.6초), 이 동안 영상 정지
 
 type Layout = { liveH: number; titleBand: number; camTop: number; camW: number; camH: number; bandTop: number; headerY: number; headerScale: number };
-const layoutOf = (clip?: { bigBoard?: boolean; noteBoard?: boolean }): Layout =>
-  clip?.noteBoard
+const layoutOf = (clip?: { bigBoard?: boolean; noteBoard?: boolean }, noFace?: boolean): Layout =>
+  noFace
+    ? { liveH: 380, titleBand: 130, camTop: 130, camW: 0, camH: 0, bandTop: 130, headerY: 44, headerScale: 0.42 }
+    : clip?.noteBoard
     ? { liveH: 600, titleBand: 130, camTop: 130, camW: 568, camH: 320, bandTop: 450, headerY: 44, headerScale: 0.42 }
     : clip?.bigBoard
       ? { liveH: 780, titleBand: 130, camTop: 130, camW: CAM_W2, camH: CAM_H2, bandTop: 610, headerY: 44, headerScale: 0.42 }
@@ -88,13 +92,14 @@ const BoardPan: React.FC<{ src: string; keys: { t: number; rect: Rect; free?: bo
 };
 
 // [[단어]] 를 형광 강조로 바꿔 렌더
-const Rich: React.FC<{ text: string }> = ({ text }) => {
+// hl: 강조 단어 스타일을 바꿀 때(말풍선 등 밝은 바탕용). 없으면 노란 글자
+const Rich: React.FC<{ text: string; hl?: React.CSSProperties }> = ({ text, hl }) => {
   const parts = text.split(/(\[\[.*?\]\])/g).filter(Boolean);
   return (
     <span style={{ whiteSpace: "pre-line" }}>
       {parts.map((p, i) =>
         p.startsWith("[[") ? (
-          <span key={i} style={{ color: C.gold }}>{p.slice(2, -2)}</span>
+          <span key={i} style={hl ?? { color: C.gold }}>{p.slice(2, -2)}</span>
         ) : (
           <span key={i}>{p}</span>
         ),
@@ -281,6 +286,91 @@ const KidBadge: React.FC<{ label: string; age: number; camBottom: number }> = ({
   );
 };
 
+// 얼굴 없는 버전 자막: 프로필 사진 얼굴 원 + 자막 말풍선. data.bubble 로 디자인 선택
+// messenger: 메신저 대화창(이름 위, 노란 말풍선) / glass: 방송 하단 자막(얼굴 + 음성 막대 + 흰 글씨, 카드 없음) / pop: 굵은 테두리·딱딱한 그림자 만화 말풍선
+const Avatar: React.FC<{ photo: string; size: number; style?: React.CSSProperties }> = ({ photo, size, style }) => {
+  const k = size / 380; // 프로필 사진(800x800)에서 얼굴 중심 (405, 260) 주변 380px 을 원에 담음
+  return (
+    <div style={{ position: "absolute", width: size, height: size, borderRadius: "50%", overflow: "hidden", background: "#ddd", boxSizing: "border-box", ...style }}>
+      <Img src={photo} style={{ position: "absolute", width: 800 * k, height: 800 * k, left: size / 2 - 405 * k, top: size / 2 - 260 * k, maxWidth: "none" }} />
+    </div>
+  );
+};
+
+const TalkBubble: React.FC<{ data: HighlightData; top: number; height: number; text?: string; s: number }> = ({ data, top, height, text, s }) => {
+  const frame = useCurrentFrame();
+  const photo = staticFile(data.outro?.photo ?? data.teacher.photo);
+  const cy = top + height / 2;
+  const style = data.bubble ?? "glass";
+  const pop = { opacity: Math.min(1, s * 1.5), transform: `translateY(${(1 - s) * 16}px) scale(${0.92 + s * 0.08})` };
+
+  if (style === "messenger") {
+    const A = 132;
+    return (
+      <>
+        <Avatar photo={photo} size={A} style={{ left: 40, top: cy - 100, border: "4px solid rgba(255,255,255,0.9)", boxShadow: "0 8px 22px rgba(0,0,0,0.45)" }} />
+        <div style={{ position: "absolute", left: 40 + A + 22, top: cy - 104, fontSize: 28, fontWeight: 800, color: "rgba(255,255,255,0.85)" }}>{data.teacher.name}</div>
+        {text && (
+          <div style={{ position: "absolute", left: 40 + A + 22, right: 40, top: cy - 58, display: "flex", pointerEvents: "none" }}>
+            <div style={{ background: "#FEE500", color: "#191919", borderRadius: "6px 30px 30px 30px", padding: "18px 30px", boxShadow: "0 10px 26px rgba(0,0,0,0.4)", transformOrigin: "left top", ...pop }}>
+              <div style={{ fontSize: 46, fontWeight: 800, lineHeight: 1.3, letterSpacing: -1, wordBreak: "keep-all" }}>
+                <Rich text={text} hl={{ color: "#D61F45", fontWeight: 900 }} />
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  if (style === "pop") {
+    const A = 150;
+    return (
+      <>
+        <Avatar photo={photo} size={A} style={{ left: 40, top: cy - A / 2 - 8, border: `6px solid ${C.ink}`, boxShadow: `6px 6px 0 ${C.gold}`, outline: "4px solid #fff", outlineOffset: -10 }} />
+        <div style={{ position: "absolute", left: 40, width: A, top: cy + A / 2 - 26, display: "flex", justifyContent: "center" }}>
+          <div style={{ background: C.gold, color: C.ink, fontSize: 24, fontWeight: 900, padding: "3px 14px", borderRadius: 10, border: `4px solid ${C.ink}`, whiteSpace: "nowrap" }}>{data.teacher.name}</div>
+        </div>
+        {text && (
+          <div style={{ position: "absolute", left: 40 + A + 40, right: 44, top, height, display: "flex", alignItems: "center", pointerEvents: "none" }}>
+            <div style={{ position: "relative", background: "#fff", color: C.ink, border: `6px solid ${C.ink}`, borderRadius: 26, padding: "16px 28px", boxShadow: `8px 8px 0 ${C.gold}`, transformOrigin: "left center", ...pop, transform: `${pop.transform} rotate(-1.2deg)` }}>
+              <div style={{ position: "absolute", left: -21, top: "50%", marginTop: -15, width: 30, height: 30, background: "#fff", borderLeft: `6px solid ${C.ink}`, borderBottom: `6px solid ${C.ink}`, transform: "rotate(45deg)" }} />
+              <div style={{ position: "relative", fontSize: 46, fontWeight: 900, lineHeight: 1.28, letterSpacing: -1, wordBreak: "keep-all" }}>
+                <Rich text={text} hl={{ background: `linear-gradient(transparent 50%, ${C.gold} 50%)`, padding: "0 4px" }} />
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
+  // glass: 왼쪽 얼굴·이름·음성 막대, 오른쪽 자막(2026-10-22 사용자 요청으로 카드 배경·테두리는 없앰)
+  const A = 140;
+  const cardTop = top + 14;
+  const cardH = height - 34;
+  return (
+    <div style={{ position: "absolute", left: 30, right: 30, top: cardTop, height: cardH, overflow: "hidden" }}>
+      <Avatar photo={photo} size={A} style={{ left: 30, top: (cardH - A) / 2 - 12, border: `4px solid ${C.gold}`, boxShadow: text ? `0 0 ${16 + s * 12}px ${C.gold}99` : "none" }} />
+      <div style={{ position: "absolute", left: 30, width: A, top: (cardH + A) / 2 - 4, display: "flex", justifyContent: "center", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 22, fontWeight: 900, color: C.gold, whiteSpace: "nowrap" }}>{data.teacher.name}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 3, height: 20 }}>
+          {[0, 1, 2, 3].map((b) => (
+            <div key={b} style={{ width: 4, borderRadius: 2, background: C.gold, height: text ? 5 + Math.abs(Math.sin(frame / 3 + b * 1.9)) * 15 : 5 }} />
+          ))}
+        </div>
+      </div>
+      {text && (
+        <div style={{ position: "absolute", left: 30 + A + 64, right: 30, top: 0, bottom: 0, display: "flex", alignItems: "center", pointerEvents: "none" }}>
+          <div style={{ fontSize: 48, fontWeight: 900, lineHeight: 1.28, letterSpacing: -1, wordBreak: "keep-all", color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.5)", transformOrigin: "left center", ...pop }}>
+            <Rich text={text} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // 선생님 소개 카드(영상이 없는 구간용): 위 = 프로필 사진, 아래 = 이름·역할 + 소개 포인트 3개가 순서대로 등장
 const TeacherVisual: React.FC<{ data: HighlightData; layout: Layout; boardH: number; t: number; cardTimes: number[] }> = ({ data, layout, boardH, t, cardTimes }) => {
   const { fps } = useVideoConfig();
@@ -327,7 +417,7 @@ const Clip: React.FC<{ data: HighlightData; index: number }> = ({ data, index })
   const CLIPS = data.clips;
   const clip = CLIPS[index];
   const CAM = clip.cam ?? data.cam;
-  const L = layoutOf(clip);
+  const L = layoutOf(clip, data.noFace);
   const boardH = H - L.liveH;
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -367,7 +457,9 @@ const Clip: React.FC<{ data: HighlightData; index: number }> = ({ data, index })
       </>
     ) : (
     <>
-      {camSrc ? (
+      {data.noFace ? (
+        <div style={{ position: "absolute", left: 0, top: 0, width: W, height: L.liveH, background: `radial-gradient(ellipse at 50% 0%, #1B3159 0%, ${C.ink} 80%)` }} />
+      ) : camSrc ? (
         <div style={{ position: "absolute", left: 0, top: 0, width: W, height: L.liveH, overflow: "hidden", background: "#000" }}>
           {/* 앰비언트: 캠을 블러·어둡게 해서 라이브 영역 전체를 채움 */}
           <div style={{ position: "absolute", left: -W * 0.15, top: -L.liveH * 0.2, width: W * 1.3, height: L.liveH * 1.4, filter: "blur(44px) brightness(0.4) saturate(1.3)" }}>
@@ -402,7 +494,7 @@ const Clip: React.FC<{ data: HighlightData; index: number }> = ({ data, index })
       <div style={{ position: "absolute", left: 0, right: 0, top: L.liveH - 3, height: 6, background: `linear-gradient(90deg, ${C.sky}, ${C.mint}, ${C.gold}, ${C.coral})`, opacity: 0.9 }} />
 
       {/* LIVE 표시(캠 왼쪽 위) + 판서 태그 */}
-      {!isCard && (
+      {!isCard && !data.noFace && (
         <div style={{ position: "absolute", left: (W - L.camW) / 2 + 18, top: L.camTop + 18, display: "flex", alignItems: "center", gap: 10, background: "rgba(0,0,0,0.55)", borderRadius: 999, padding: "6px 16px", opacity: 0.9 }}>
           <div style={{ width: 14, height: 14, borderRadius: "50%", background: C.coral, boxShadow: `0 0 ${6 + pulse * 14}px ${C.coral}` }} />
           <span style={{ fontSize: 22, fontWeight: 900, letterSpacing: 1 }}>LIVE</span>
@@ -439,8 +531,11 @@ const Clip: React.FC<{ data: HighlightData; index: number }> = ({ data, index })
         );
       })()}
 
+      {/* 얼굴 없는 버전: 프로필 사진 얼굴 원 + 말풍선 자막 */}
+      {data.noFace && !isCard && <TalkBubble data={data} top={L.bandTop} height={L.liveH - L.bandTop} text={cap?.text} s={capS} />}
+
       {/* 자막: 캠 아래 여백 띠에. 학생 자막은 하늘색 박스 + 학생 라벨, 학생 클립의 선생님 자막엔 선생님 라벨 */}
-      {cap && (
+      {cap && !data.noFace && (
         <div style={{ position: "absolute", left: 0, right: 0, top: L.bandTop, height: L.liveH - L.bandTop, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: 8, padding: "0 40px" }}>
           {hasKid && (
             <div style={{ opacity: Math.min(1, capS * 1.5), fontSize: 26, fontWeight: 900, padding: "4px 18px", borderRadius: 999, background: cap.who === "kid" ? C.sky : "rgba(255,255,255,0.9)", color: C.ink, letterSpacing: -0.5 }}>

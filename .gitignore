@@ -14,3 +14,14 @@ studio.log
 
 # 영상 소재(학생·학부모 사진/클립 포함)는 커밋하지 않음 — 맥미니로 직접 복사
 public/
+
+# 쇼츠 리마스터: 작업 스크립트·설정만 추적 (영상·이미지·받아쓰기·로그인 정보·로그·상태 파일 제외)
+remaster/**
+!remaster/**/
+!remaster/**/*.py
+!remaster/**/episode.json
+!remaster/**/README.txt
+!remaster/**/목록.txt
+!remaster/upload/manifest.json
+!remaster/social/captions.json
+!remaster/social/schedule.tsv

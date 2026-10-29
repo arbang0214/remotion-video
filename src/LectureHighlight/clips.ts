@@ -47,8 +47,11 @@ export type Outro = { lines: string[]; links?: OutroLink[]; note?: string; photo
 // episode: 타이틀 앞 스티커(EP.01), icon: 타이틀 옆 작은 아이콘 이미지(public/ 경로, 없으면 표시 안 함)
 // hook: 썸네일(첫 프레임·썸네일 카드) 메인 문구. "초등 수학은\n[[강조]]을\n길러야 합니다" 처럼 줄마다 \n, 강조는 [[ ]]. 있으면 title 대신 크게 쓰고 title 은 작은 태그로
 // cover: 필기 강조 썸네일(NoteThumbnail) 설정. 있으면 본편 첫 화면도 같은 카드로 시작
-export type NoteCover = { note: string; noteAspect: number; camFile: string; camFrom?: number; faceAt?: [number, number]; faceBox?: number; tag?: string; cardW?: number; cardTop?: number; faceInset?: number; belowGap?: number; labelRight?: boolean; cardLeft?: number; facePhoto?: string; faceSize?: number };
-export type HighlightData = { teacher: Teacher; cam: Rect; title: string; subtitle: string; episode?: string; icon?: string; hook?: string; clips: Clip[]; holdAfterLast: number; outro?: Outro; cover?: NoteCover };
+// bubble: noFace 자막 말풍선 디자인(Shorts.tsx TalkBubble)
+// noFace: 선생님 캠을 빼고 음성 + 수업 화면만(위에는 챕터 제목·자막 띠만 남기고 판서를 1540 으로 키움)
+// noFace: 얼굴 없이 필기만(썸네일에서 얼굴 원을 빼고 필기 카드를 키움)
+export type NoteCover = { noFace?: boolean; note: string; noteAspect: number; camFile: string; camFrom?: number; faceAt?: [number, number]; faceBox?: number; tag?: string; cardW?: number; cardTop?: number; faceInset?: number; belowGap?: number; labelRight?: boolean; cardLeft?: number; facePhoto?: string; faceSize?: number };
+export type HighlightData = { teacher: Teacher; cam: Rect; title: string; subtitle: string; episode?: string; icon?: string; hook?: string; clips: Clip[]; holdAfterLast: number; outro?: Outro; cover?: NoteCover; noFace?: boolean; bubble?: "messenger" | "glass" | "pop" };
 
 export const CLIPS: Clip[] = [
   {
