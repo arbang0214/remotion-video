@@ -1,0 +1,35 @@
+{
+  "name": "대치동캐슬 남색 (위 제목 노랑/흰 · 아래 손글씨 톡방 안내)",
+  "reference": "reference.png",
+  "registered": "2026-10-31 — reference.png(유튜브 화면 캡처 691×1213, 테두리 8px)를 1080×1920 으로 환산해 잼",
+  "size": [1080, 1920],
+  "background": "#161147",
+  "video": { "y": 500, "h": 912 },
+  "title": {
+    "font": "fonts/BlackHanSans-Regular.ttf",
+    "size": 118,
+    "squeeze": 0.87,
+    "word_gap": 0.2,
+    "stroke": 4,
+    "stroke_color": "#08061E",
+    "accent": "#FAFF4B",
+    "lines": [
+      { "y": 276, "color": "#FAFF4B" },
+      { "y": 408, "color": "#FFFFFF" }
+    ]
+  },
+  "caption": {
+    "font": "fonts/Pretendard-Bold.ttf",
+    "size": 70,
+    "y": 1290,
+    "color": "#FFFFFF",
+    "accent": "#FAFF4B",
+    "stroke": 2,
+    "shadow_blur": 8
+  },
+  "texts": [
+    { "text": "‘선착순 마감 강의 소식’은?", "font": "fonts/NanumPenScript-Regular.ttf", "y": 1495, "width": 691, "color": "#FFFFFF" },
+    { "text": "‘대치동캐슬’ 톡방에서", "font": "fonts/NanumPenScript-Regular.ttf", "y": 1615, "width": 645, "color": "#FFFFFF", "stroke": 2 }
+  ],
+  "images": []
+}

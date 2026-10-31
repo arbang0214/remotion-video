@@ -25,3 +25,4 @@ remaster/**
 !remaster/upload/manifest.json
 !remaster/social/captions.json
 !remaster/social/schedule.tsv
+universe-test/
