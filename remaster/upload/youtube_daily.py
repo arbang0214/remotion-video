@@ -171,6 +171,8 @@ def cmd_next(dry_run=False):
         state[str(n)]["original"] = result
         save(STATE, state)
         log(f"  원본 {ep['original_id']}: {result}")
+    elif ep.get("new_short"):
+        log("  원본: 없음(새 쇼츠)")
     else:
         log("  원본: 등록 안 됨 → 수동으로 비공개 처리")
 
