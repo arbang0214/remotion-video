@@ -27,11 +27,12 @@ BAR, WHITE, META_GRAY = "#0A0A0A", "#FFFFFF", "#9A9A9A"
 FONT_TITLE = FONTS / "Cafe24Ssurround.ttf"   # 제목 2줄 전용
 FONT_NAME = FONTS / "Pretendard-Black.ttf"   # 이름 줄, 자막, 티저 대사
 FONT_META = FONTS / "Pretendard-Bold.ttf"    # 자격 줄, 제목 폴백
-SIZE_TITLE, SIZE_NAME, SIZE_META = 100, 46, 32
-NAME = "이강준 · 카박준쌤"
-META = "KAIST 박사 · 대치동캐슬 초등수학"
+SIZE_TITLE, SIZE_NAME, SIZE_META = 100, 58, 40   # 프로필 이름·소개(2026-11-13 46·32 → 58·40, 잘 보이게)
+PROFILE_META_COLOR, SMALL_COLOR = "#C4C4C4", "#B4B4B4"
+NAME = "이강준T"
+META = ["카이스트 학사/석사/박사", "대치동캐슬 초등, 중등 수학"]   # 2026-11-13 사용자 변경(예전: "이강준 · 카박준쌤" / "KAIST 박사 · 대치동캐슬 초등수학" 가운데 두 줄)
 TITLE_Y = (290, 410)                    # 제목 두 줄 세로 중심
-PROFILE_Y = (BOTTOM_Y + 72, BOTTOM_Y + 132)  # 프로필 두 줄 세로 중심. 영상에서는 자막이 없는 구간에만 보인다
+PROFILE_CY, PROFILE_LINE_GAP, PROFILE_GAP = BOTTOM_Y + 120, 54, 36  # 프로필: 왼쪽 이름 | 오른쪽 소개 두 줄, 묶음 세로 중심. 영상에서는 자막이 없는 구간에만 보인다
 MAX_LINE_W = W - 120                    # 한 줄 최대 폭(양옆 여백 60)
 
 # 강조색 로테이션: N번째 게시물 = ROTATION[(N-1) % 6]. 순서를 바꾸지 말 것
@@ -50,6 +51,11 @@ BADGE_FILL, BADGE_DOT, BADGE_DOT_D, BADGE_DOT_GAP = "#2A2A2A", "#E5484D", 18, 12
 # 썸네일 선생님 화면(선택): teaser 항목에 "pip" 가 있을 때만. 영상 칸 오른쪽 위, 흰 테두리.
 # 실시간 수업 시리즈에서 썸네일 장면에 선생님이 안 나올 때 쓴다(영상 속 작은 화면 440px 보다 조금 크게)
 PIP_W, PIP_BORDER, PIP_MARGIN = 520, 4, 16
+
+# 작은 프로필(선택): episode.json 에 "profile_small": true 일 때 영상 내내 자막 아래에 작게 깔린다(2026-11-13 사용자 요청, 22번째 편~).
+# 자막 없는 구간은 원래 큰 프로필이 덮는다. 휴대폰 쇼츠·릴스 화면에서는 아래쪽 제목·채널 표시에 일부 가려질 수 있다
+# 배치: 왼쪽 이름 한 줄 | 오른쪽 소개 두 줄, 묶음 전체를 가운데 정렬(2026-11-13 사용자 지정)
+SMALL_NAME_SIZE, SMALL_META_SIZE, SMALL_CY, SMALL_LINE_GAP, SMALL_GAP = 38, 28, BOTTOM_Y + 305, 36, 24
 
 ACCENT_NAME, ACCENT = ROTATION[(EP["post_no"] - 1) % len(ROTATION)]
 WARNINGS = []
@@ -98,6 +104,17 @@ def draw_badge(d, text):
     d.text((x + BADGE_DOT_D + BADGE_DOT_GAP, BADGE_CY), text, font=f, fill=WHITE, anchor="lm")
 
 
+def draw_side_profile(d, cy, name_size, meta_size, line_gap, gap, name_color, meta_color=None):
+    """왼쪽 이름 한 줄 | 오른쪽 소개 두 줄. 묶음 전체를 가로 가운데 정렬. 소개도 굵은 글꼴(2026-11-13 잘 보이게)"""
+    fn, fm = font(FONT_NAME, name_size), font(FONT_NAME, meta_size)
+    META_GRAY_ = meta_color or META_GRAY
+    wn = fn.getlength(NAME)
+    x0 = (W - (wn + gap + max(fm.getlength(t) for t in META))) / 2
+    d.text((x0, cy), NAME, font=fn, fill=name_color, anchor="lm")
+    for k, t in enumerate(META):
+        d.text((x0 + wn + gap, cy + (k - (len(META) - 1) / 2) * line_gap), t, font=fm, fill=META_GRAY_, anchor="lm")
+
+
 def frame_layer(profile=True):
     """영상 위에 얹는 틀(가운데는 투명)"""
     img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -109,9 +126,10 @@ def frame_layer(profile=True):
         draw_rich_line(d, cy, line, tf, fallback=tfb)
     if EP.get("badge"):
         draw_badge(d, EP["badge"])
+    if not profile and EP.get("profile_small"):
+        draw_side_profile(d, SMALL_CY, SMALL_NAME_SIZE, SMALL_META_SIZE, SMALL_LINE_GAP, SMALL_GAP, SMALL_COLOR, SMALL_COLOR)
     if profile:
-        draw_rich_line(d, PROFILE_Y[0], NAME, font(FONT_NAME, SIZE_NAME))
-        draw_rich_line(d, PROFILE_Y[1], META, font(FONT_META, SIZE_META), base=META_GRAY)
+        draw_side_profile(d, PROFILE_CY, SIZE_NAME, SIZE_META, PROFILE_LINE_GAP, PROFILE_GAP, WHITE, PROFILE_META_COLOR)
     return img
 
 

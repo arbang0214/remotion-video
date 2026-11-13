@@ -119,7 +119,8 @@ python3 $K/scripts/build.py remaster/epNN/episode.json     # → out/thumbnail.p
 |---|---|
 | 화면 | 1080×1920. 위 바 0~480, 영상 480~1480 (1080×1000), 아래 바 1480~1920. 바 색 #0A0A0A |
 | 제목 | 2줄, Cafe24Ssurround 100px, 흰색 + 훅 단어만 강조색. 세로 중심 290 / 410. Cafe24에 없는 글자는 Pretendard-Bold로 자동 대체. 영상 끝까지 고정 |
-| 프로필 | "이강준 · 카박준쌤" Pretendard-Black 46px 흰색 / "KAIST 박사 · 대치동캐슬 초등수학" Pretendard-Bold 32px #9A9A9A. 썸네일에는 항상, 영상에서는 자막이 없는 구간에만(자막이 있으면 빼기 — 어차피 유튜브 UI에 가려짐) |
+| 프로필 | 2026-11-13 변경: 왼쪽 "이강준T" Pretendard-Black 58px 흰색 | 오른쪽 "카이스트 학사/석사/박사" / "대치동캐슬 초등, 중등 수학" 두 줄 Pretendard-Black 40px #C4C4C4, 묶음 가로 가운데·세로 중심 바 아래 +120. 22번째 편부터(1~21편은 예전 가운데 두 줄 "이강준 · 카박준쌤 / KAIST 박사 · 대치동캐슬 초등수학"). 썸네일에는 항상, 영상에서는 자막이 없는 구간에만 |
+| 작은 프로필(선택) | episode.json "profile_small": true 일 때 영상 내내 자막 아래(바 아래 +305 중심)에 프로필과 같은 배치로 작게(이름 38px·소개 28px, 모두 Pretendard-Black #B4B4B4). 22번째 편부터 사용자 요청 |
 | 자막 | 아래 바, Pretendard-Black 58px 흰색, 첫 줄 중심 1550, 줄 간격 78 |
 | 티저 대사 | 썸네일 영상 영역 안, Pretendard-Black 76px 흰색 + 검정 외곽선 6px, 한 줄 |
 | 썸네일 선생님 화면(선택) | 실시간 수업 시리즈에서 썸네일 장면에 선생님이 없을 때. teaser 항목의 `"pip"`. 영상 칸 오른쪽 위(여백 16), 폭 520px, 흰 테두리 4px. 썸네일에만 |
