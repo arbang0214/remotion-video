@@ -107,6 +107,15 @@ def frame_layer():
         color = t.get("color", "#FFFFFF")  # stroke = 같은 색으로 획 굵게
         d.text((W / 2, t["y"]), t["text"], font=font(t["font"], size), fill=color, anchor="mm",
                stroke_width=t.get("stroke", 0), stroke_fill=color)
+    pf, pe = TPL.get("profile"), EP.get("profile")  # 프로필(선택): 왼쪽 이름 | 오른쪽 소개 줄들, 묶음 가로 가운데
+    if pf and pe:
+        fn, fm = font(pf["font"], pf["name_size"]), font(pf["font"], pf["meta_size"])
+        wn = fn.getlength(pe["name"])
+        x0 = (W - (wn + pf["gap"] + max(fm.getlength(t) for t in pe["meta"]))) / 2
+        d.text((x0, pf["y"]), pe["name"], font=fn, fill=pf.get("name_color", "#FFFFFF"), anchor="lm")
+        for k, t in enumerate(pe["meta"]):
+            d.text((x0 + wn + pf["gap"], pf["y"] + (k - (len(pe["meta"]) - 1) / 2) * pf["line_gap"]), t, font=fm,
+                   fill=pf.get("meta_color", "#C4C4C4"), anchor="lm")
     for m in TPL.get("images", []):  # 로고 등 고정 이미지: {file, x, y, w}
         im = Image.open(TPL_DIR / m["file"]).convert("RGBA")
         im = im.resize((m["w"], round(im.height * m["w"] / im.width)), Image.LANCZOS)
@@ -148,7 +157,7 @@ def crop_box():
 
 def video_filter():
     c = crop_box()
-    return f"crop={c['w']}:{c['h']}:{c['x']}:{c['y']},scale={W}:{VIDEO_H}:flags=lanczos,setsar=1"
+    return f"crop={c['w']}:{c['h']}:{c['x']}:{c['y']},scale={W}:{VIDEO_H}:flags=lanczos,setsar=1" + (("," + EP["grade"]) if EP.get("grade") else "")  # grade(선택): 톤 보정 ffmpeg 필터
 
 
 def to_out(t):
